@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Maze Challenge</title>
+    <meta name="description" content="A dynamic maze game where the world moves around you.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="ui-layer">
+        <!-- Landing Screen -->
+        <div id="landing-screen" class="screen active">
+            <h1 class="glitch" data-text="NEON MAZE">NEON MAZE</h1>
+            <p class="subtitle">The world moves. You stay still.</p>
+            <div class="instructions">
+                <h2>How to Play:</h2>
+                <ul>
+                    <li>Click <strong>Start Game</strong> to lock your mouse.</li>
+                    <li>Move your mouse to shift the maze.</li>
+                    <li>Navigate from the <span class="highlight-green">START (Green)</span> to the <span class="highlight-red">END (Red)</span>.</li>
+                    <li>Do <strong>NOT</strong> touch the glowing blue walls, or you'll restart!</li>
+                    <li>Press <kbd>ESC</kbd> to pause / unlock mouse.</li>
+                </ul>
+            </div>
+            <button id="start-btn" class="glow-on-hover">START GAME</button>
+        </div>
+
+        <!-- Game Overlay (Score, etc.) -->
+        <div id="game-overlay" class="screen">
+            <div class="hud">
+                <span id="level-indicator">Level: 1</span>
+                <span id="timer-indicator">Time: 0.0s</span>
+            </div>
+            <div id="message-toast" class="toast hidden"></div>
+        </div>
+
+        <!-- Win Screen -->
+        <div id="win-screen" class="screen hidden">
+            <h1 class="rainbow-text">A-MAZE-ING!</h1>
+            <p id="funny-message" class="subtitle">You actually did it!</p>
+            <div class="funny-image-container">
+                <!-- We will add randomized funny emojis/text here -->
+                <div id="funny-emoji">😎</div>
+            </div>
+            <p>Time: <span id="final-time">0.0</span>s</p>
+            <button id="next-level-btn" class="glow-on-hover mt-4">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

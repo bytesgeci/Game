@@ -1,0 +1,642 @@
+:root {
+    --bg-color: #0d0e15;
+    --text-color: #f1f5f9;
+    --accent-red: #ff3b30;
+    --accent-green: #34c759;
+    --accent-blue: #00f0ff;
+    --glitch-color1: #ff00ff;
+    --glitch-color2: #00ffff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Outfit', sans-serif;
+    overflow: hidden;
+    /* Hide scrollbars for the canvas */
+    user-select: none;
+}
+
+#game-canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    /* Lowest layer */
+}
+
+/* UI Layer is above canvas */
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10;
+    pointer-events: none;
+    /* Let canvas receive events normally unless explicitly caught */
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(13, 14, 21, 0.85);
+    /* Glassmorphism background */
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+    /* Clickable screens */
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.screen.active {
+    display: flex;
+    opacity: 1;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Typography styles */
+h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 4rem;
+    margin-bottom: 2rem;
+    text-shadow: 0 0 10px var(--accent-blue), 0 0 20px var(--accent-blue);
+    position: relative;
+    text-align: center;
+}
+
+.subtitle {
+    font-size: 1.5rem;
+    font-weight: 300;
+    margin-bottom: 3rem;
+    color: #a0aec0;
+}
+
+.instructions {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    max-width: 600px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.instructions h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--accent-blue);
+}
+
+.instructions ul {
+    list-style-type: none;
+}
+
+.instructions li {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+    line-height: 1.5;
+}
+
+.highlight-green {
+    color: var(--accent-green);
+    font-weight: bold;
+    text-shadow: 0 0 5px var(--accent-green);
+}
+
+.highlight-red {
+    color: var(--accent-red);
+    font-weight: bold;
+    text-shadow: 0 0 5px var(--accent-red);
+}
+
+kbd {
+    background: #333;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+/* Button styles */
+button {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.glow-on-hover {
+    width: 250px;
+    height: 60px;
+    border: none;
+    outline: none;
+    color: #fff;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    z-index: 0;
+    border-radius: 10px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.2s ease-in-out;
+}
+
+.glow-on-hover:before {
+    content: '';
+    background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    background-size: 400%;
+    z-index: -1;
+    filter: blur(5px);
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    animation: glowing 20s linear infinite;
+    opacity: 0;
+    transition: opacity .3s ease-in-out;
+    border-radius: 10px;
+}
+
+.glow-on-hover:active {
+    color: #000;
+    transform: scale(0.95);
+}
+
+.glow-on-hover:active:after {
+    background: transparent;
+}
+
+.glow-on-hover:hover:before {
+    opacity: 1;
+}
+
+.glow-on-hover:after {
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #111;
+    left: 0;
+    top: 0;
+    border-radius: 10px;
+    border: 1px solid var(--accent-blue);
+}
+
+@keyframes glowing {
+    0% {
+        background-position: 0 0;
+    }
+
+    50% {
+        background-position: 400% 0;
+    }
+
+    100% {
+        background-position: 0 0;
+    }
+}
+
+/* Game HUD */
+#game-overlay {
+    background: transparent;
+    pointer-events: none;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 2rem;
+}
+
+.hud {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.2rem;
+    color: var(--text-color);
+    text-shadow: 2px 2px 0px #000;
+}
+
+/* Toast Messages */
+.toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 59, 48, 0.9);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 2rem;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(255, 59, 48, 0.6);
+    opacity: 1;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    z-index: 100;
+}
+
+.toast.hidden {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+    pointer-events: none;
+}
+
+/* Glitch Effect */
+.glitch {
+    position: relative;
+}
+
+.glitch::before,
+.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-color);
+}
+
+.glitch::before {
+    left: 2px;
+    text-shadow: -2px 0 var(--glitch-color1);
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+    left: -2px;
+    text-shadow: -2px 0 var(--glitch-color2);
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+    0% {
+        clip: rect(6px, 9999px, 83px, 0);
+        transform: skew(0.85deg);
+    }
+
+    5% {
+        clip: rect(78px, 9999px, 47px, 0);
+        transform: skew(0.68deg);
+    }
+
+    10% {
+        clip: rect(58px, 9999px, 5px, 0);
+        transform: skew(0.04deg);
+    }
+
+    15% {
+        clip: rect(69px, 9999px, 81px, 0);
+        transform: skew(0.09deg);
+    }
+
+    20% {
+        clip: rect(100px, 9999px, 35px, 0);
+        transform: skew(0.24deg);
+    }
+
+    25% {
+        clip: rect(76px, 9999px, 58px, 0);
+        transform: skew(0.97deg);
+    }
+
+    30% {
+        clip: rect(48px, 9999px, 58px, 0);
+        transform: skew(0.79deg);
+    }
+
+    35% {
+        clip: rect(48px, 9999px, 31px, 0);
+        transform: skew(0.53deg);
+    }
+
+    40% {
+        clip: rect(59px, 9999px, 89px, 0);
+        transform: skew(0.02deg);
+    }
+
+    45% {
+        clip: rect(2px, 9999px, 33px, 0);
+        transform: skew(0.06deg);
+    }
+
+    50% {
+        clip: rect(43px, 9999px, 84px, 0);
+        transform: skew(0.25deg);
+    }
+
+    55% {
+        clip: rect(32px, 9999px, 15px, 0);
+        transform: skew(0.79deg);
+    }
+
+    60% {
+        clip: rect(64px, 9999px, 92px, 0);
+        transform: skew(0.08deg);
+    }
+
+    65% {
+        clip: rect(46px, 9999px, 82px, 0);
+        transform: skew(0.97deg);
+    }
+
+    70% {
+        clip: rect(89px, 9999px, 78px, 0);
+        transform: skew(0.05deg);
+    }
+
+    75% {
+        clip: rect(21px, 9999px, 14px, 0);
+        transform: skew(0.44deg);
+    }
+
+    80% {
+        clip: rect(98px, 9999px, 92px, 0);
+        transform: skew(0.19deg);
+    }
+
+    85% {
+        clip: rect(87px, 9999px, 15px, 0);
+        transform: skew(0.48deg);
+    }
+
+    90% {
+        clip: rect(19px, 9999px, 88px, 0);
+        transform: skew(0.51deg);
+    }
+
+    95% {
+        clip: rect(13px, 9999px, 4px, 0);
+        transform: skew(0.01deg);
+    }
+
+    100% {
+        clip: rect(11px, 9999px, 42px, 0);
+        transform: skew(0.86deg);
+    }
+}
+
+@keyframes glitch-anim2 {
+    0% {
+        clip: rect(65px, 9999px, 100px, 0);
+        transform: skew(0.8deg);
+    }
+
+    5% {
+        clip: rect(52px, 9999px, 74px, 0);
+        transform: skew(0.48deg);
+    }
+
+    10% {
+        clip: rect(79px, 9999px, 85px, 0);
+        transform: skew(0.79deg);
+    }
+
+    15% {
+        clip: rect(75px, 9999px, 5px, 0);
+        transform: skew(0.38deg);
+    }
+
+    20% {
+        clip: rect(67px, 9999px, 61px, 0);
+        transform: skew(0.31deg);
+    }
+
+    25% {
+        clip: rect(14px, 9999px, 79px, 0);
+        transform: skew(0.46deg);
+    }
+
+    30% {
+        clip: rect(1px, 9999px, 66px, 0);
+        transform: skew(0.97deg);
+    }
+
+    35% {
+        clip: rect(86px, 9999px, 30px, 0);
+        transform: skew(0.12deg);
+    }
+
+    40% {
+        clip: rect(23px, 9999px, 98px, 0);
+        transform: skew(0.36deg);
+    }
+
+    45% {
+        clip: rect(85px, 9999px, 72px, 0);
+        transform: skew(0.79deg);
+    }
+
+    50% {
+        clip: rect(74px, 9999px, 71px, 0);
+        transform: skew(0.03deg);
+    }
+
+    55% {
+        clip: rect(16px, 9999px, 78px, 0);
+        transform: skew(0.68deg);
+    }
+
+    60% {
+        clip: rect(11px, 9999px, 8px, 0);
+        transform: skew(0.41deg);
+    }
+
+    65% {
+        clip: rect(4px, 9999px, 16px, 0);
+        transform: skew(0.8deg);
+    }
+
+    70% {
+        clip: rect(25px, 9999px, 67px, 0);
+        transform: skew(0.85deg);
+    }
+
+    75% {
+        clip: rect(73px, 9999px, 88px, 0);
+        transform: skew(0.55deg);
+    }
+
+    80% {
+        clip: rect(98px, 9999px, 1px, 0);
+        transform: skew(0.55deg);
+    }
+
+    85% {
+        clip: rect(1px, 9999px, 3px, 0);
+        transform: skew(0.55deg);
+    }
+
+    90% {
+        clip: rect(20px, 9999px, 7px, 0);
+        transform: skew(0.84deg);
+    }
+
+    95% {
+        clip: rect(100px, 9999px, 83px, 0);
+        transform: skew(0.86deg);
+    }
+
+    100% {
+        clip: rect(85px, 9999px, 14px, 0);
+        transform: skew(0.24deg);
+    }
+}
+
+.rainbow-text {
+    background-image: linear-gradient(to left, violet, indigo, blue, green, yellow, orange, red);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rainbow-animation 5s infinite linear;
+    background-size: 800% 800%;
+}
+
+@keyframes rainbow-animation {
+    0% {
+        background-position: 0% 50%
+    }
+
+    50% {
+        background-position: 100% 50%
+    }
+
+    100% {
+        background-position: 0% 50%
+    }
+}
+
+.funny-image-container {
+    font-size: 8rem;
+    margin: 2rem 0;
+    animation: bounce 2s infinite ease-in-out;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+.mt-4 {
+    margin-top: 2rem;
+}
+
+/* Floating Emoji Animation */
+.floating-emoji {
+    position: fixed;
+    pointer-events: none;
+    font-size: 3rem;
+    z-index: 200;
+    user-select: none;
+    animation: floatUp 1.5s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(0.5);
+    }
+
+    50% {
+        transform: translateY(-50px) scale(1.2);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-100px) scale(1);
+    }
+}
+
+/* 3D Joyous Overlay Emoji */
+.joyous-emoji-3d {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    pointer-events: none;
+    user-select: none;
+    z-index: 10000;
+    font-size: 5rem;
+    animation: smashScreenJoyous forwards;
+    animation-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes smashScreenJoyous {
+    0% {
+        transform: translate(calc(-50% + var(--start-x)), calc(-50% + var(--start-y))) scale(0.1) rotate(0deg);
+        opacity: 0;
+        filter: blur(5px);
+    }
+
+    30% {
+        opacity: 1;
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+    }
+
+    100% {
+        transform: translate(calc(-50% + var(--end-x)), calc(-50% + var(--end-y))) scale(8) rotate(var(--end-rot));
+        opacity: 0;
+        filter: blur(15px);
+    }
+}
+
+/* 3D Screen Hit Emoji */
+.hit-screen-emoji {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    pointer-events: none;
+    user-select: none;
+    z-index: 9999;
+    font-size: 5rem;
+    animation: smashScreen 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes smashScreen {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+        filter: blur(2px);
+    }
+
+    20% {
+        transform: translate(-50%, -50%) scale(8) rotate(-15deg);
+        opacity: 1;
+        filter: drop-shadow(0 0 20px rgba(255, 59, 48, 0.8));
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(15) rotate(-30deg);
+        opacity: 0;
+        filter: blur(10px);
+    }
+}
